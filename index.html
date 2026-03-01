@@ -72,6 +72,36 @@
     }
     .nav-tab:hover { background: rgba(255,255,255,0.2); color: white; }
 
+    /* ===== ヘッダー（モバイル） ===== */
+    @media (max-width: 640px) {
+      header { padding: 0; }
+      .header-inner {
+        flex-direction: column;
+        height: auto;
+        align-items: flex-start;
+        padding: 10px 16px 0;
+        gap: 4px;
+      }
+      .nav-tabs {
+        width: calc(100% + 32px);
+        margin-left: -16px;
+        overflow-x: auto;
+        flex-wrap: nowrap;
+        justify-content: flex-start;
+        padding: 6px 16px 8px;
+        gap: 4px;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+      }
+      .nav-tabs::-webkit-scrollbar { display: none; }
+      .nav-tab {
+        font-size: 0.82rem;
+        padding: 7px 14px;
+        background: rgba(255,255,255,0.15);
+        flex-shrink: 0;
+      }
+    }
+
     /* ===== メインレイアウト ===== */
     main {
       max-width: 860px;
@@ -455,6 +485,7 @@
     @media (max-width: 640px) {
       .hero { padding: 24px 18px; }
       .tracker-add { grid-template-columns: 1fr 1fr; }
+      #steps, #tracker, #checker, #medical, #qa, #tips { scroll-margin-top: 105px; }
     }
   </style>
 </head>

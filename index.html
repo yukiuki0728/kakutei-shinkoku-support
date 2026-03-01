@@ -1,0 +1,994 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>確定申告サポート</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --blue:    #1a5fb4;
+      --blue2:   #2e7dd1;
+      --blue3:   #d4e4f7;
+      --green:   #2a7a4b;
+      --green2:  #d4f0e1;
+      --red:     #c0392b;
+      --red2:    #fdecea;
+      --yellow:  #f39c12;
+      --yellow2: #fef9ec;
+      --gray:    #f4f6f9;
+      --gray2:   #e8ecf0;
+      --gray3:   #6b7a8d;
+      --text:    #1a2332;
+      --text2:   #4a5568;
+      --border:  #d1d9e0;
+      --white:   #ffffff;
+    }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: 'Hiragino Sans', 'Yu Gothic UI', 'Meiryo', sans-serif;
+      background: var(--gray);
+      color: var(--text);
+      min-height: 100vh;
+      font-size: 15px;
+      line-height: 1.7;
+    }
+
+    /* ===== ヘッダー ===== */
+    header {
+      background: linear-gradient(135deg, var(--blue), var(--blue2));
+      color: white;
+      padding: 0 20px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 2px 12px rgba(26,95,180,0.3);
+    }
+    .header-inner {
+      max-width: 860px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 58px;
+      gap: 8px;
+    }
+    .header-title { font-size: 1.05rem; font-weight: 700; letter-spacing: 0.05em; white-space: nowrap; }
+    .header-sub { font-size: 0.72rem; opacity: 0.8; }
+    .nav-tabs {
+      display: flex;
+      gap: 2px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+    .nav-tab {
+      color: rgba(255,255,255,0.8);
+      text-decoration: none;
+      font-size: 0.78rem;
+      padding: 6px 10px;
+      border-radius: 6px;
+      transition: background 0.2s;
+      white-space: nowrap;
+    }
+    .nav-tab:hover { background: rgba(255,255,255,0.2); color: white; }
+
+    /* ===== メインレイアウト ===== */
+    main {
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 24px 16px 80px;
+    }
+
+    /* ===== セクション共通 ===== */
+    section { margin-bottom: 48px; }
+    .section-title {
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: var(--blue);
+      padding-bottom: 10px;
+      border-bottom: 2px solid var(--blue3);
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .badge {
+      display: inline-block;
+      background: var(--blue);
+      color: white;
+      font-size: 0.68rem;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 20px;
+      letter-spacing: 0.05em;
+    }
+
+    /* ===== ヒーロー ===== */
+    .hero {
+      background: linear-gradient(135deg, #1a5fb4 0%, #2e7dd1 60%, #5ba3e8 100%);
+      color: white;
+      border-radius: 16px;
+      padding: 36px 28px;
+      margin-bottom: 32px;
+      position: relative;
+      overflow: hidden;
+    }
+    .hero::before {
+      content: '📋';
+      position: absolute;
+      right: 24px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 5rem;
+      opacity: 0.15;
+    }
+    .hero h1 { font-size: clamp(1.3rem, 4vw, 1.8rem); font-weight: 700; margin-bottom: 10px; }
+    .hero p { font-size: 0.88rem; opacity: 0.9; line-height: 1.8; }
+    .hero-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
+    .hero-chip {
+      background: rgba(255,255,255,0.2);
+      border: 1px solid rgba(255,255,255,0.3);
+      border-radius: 20px;
+      padding: 4px 12px;
+      font-size: 0.78rem;
+    }
+
+    /* ===== ステップ手順 ===== */
+    #steps { scroll-margin-top: 70px; }
+    .steps-list { display: flex; flex-direction: column; gap: 0; }
+    .step-item {
+      display: flex;
+      gap: 0;
+      position: relative;
+    }
+    .step-left {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: 52px;
+      flex-shrink: 0;
+    }
+    .step-num {
+      width: 36px;
+      height: 36px;
+      background: var(--blue);
+      color: white;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 0.9rem;
+      flex-shrink: 0;
+    }
+    .step-line {
+      width: 2px;
+      flex: 1;
+      background: var(--blue3);
+      min-height: 20px;
+    }
+    .step-item:last-child .step-line { display: none; }
+    .step-body {
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 16px 18px;
+      margin-bottom: 12px;
+      flex: 1;
+    }
+    .step-title { font-weight: 700; font-size: 0.97rem; margin-bottom: 6px; color: var(--text); }
+    .step-desc { font-size: 0.83rem; color: var(--text2); }
+    .step-tip {
+      margin-top: 10px;
+      background: var(--yellow2);
+      border-left: 3px solid var(--yellow);
+      padding: 8px 12px;
+      font-size: 0.8rem;
+      color: #7a5c00;
+      border-radius: 0 6px 6px 0;
+    }
+    .step-warn {
+      margin-top: 10px;
+      background: var(--red2);
+      border-left: 3px solid var(--red);
+      padding: 8px 12px;
+      font-size: 0.8rem;
+      color: #7a1a1a;
+      border-radius: 0 6px 6px 0;
+    }
+    .step-docs {
+      margin-top: 10px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+    .doc-tag {
+      background: var(--blue3);
+      color: var(--blue);
+      font-size: 0.75rem;
+      padding: 3px 10px;
+      border-radius: 4px;
+      font-weight: 600;
+    }
+
+    /* ===== 源泉徴収票トラッカー ===== */
+    #tracker { scroll-margin-top: 70px; }
+    .tracker-wrap {
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px;
+    }
+    .tracker-add {
+      display: grid;
+      grid-template-columns: 1fr 1fr 2fr;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+    @media (max-width: 600px) { .tracker-add { grid-template-columns: 1fr 1fr; } }
+    .t-input, .t-select {
+      padding: 9px 12px;
+      border: 1.5px solid var(--border);
+      border-radius: 8px;
+      font-family: inherit;
+      font-size: 0.85rem;
+      color: var(--text);
+      background: var(--gray);
+      width: 100%;
+    }
+    .t-input:focus, .t-select:focus { outline: none; border-color: var(--blue2); background: white; }
+    .t-btn {
+      padding: 9px 20px;
+      background: var(--blue);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-family: inherit;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+      white-space: nowrap;
+    }
+    .t-btn:hover { background: var(--blue2); }
+    .tracker-list { display: flex; flex-direction: column; gap: 8px; }
+    .tracker-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: var(--gray);
+      border-radius: 8px;
+      padding: 10px 14px;
+      font-size: 0.85rem;
+    }
+    .tracker-item-year { font-weight: 700; color: var(--blue); width: 48px; }
+    .tracker-item-count { color: var(--text2); width: 36px; }
+    .tracker-item-loc { flex: 1; color: var(--text); }
+    .tracker-del { background: none; border: none; cursor: pointer; color: var(--gray3); font-size: 1rem; padding: 2px 6px; }
+    .tracker-del:hover { color: var(--red); }
+    .tracker-empty { text-align: center; color: var(--gray3); font-size: 0.85rem; padding: 20px 0; }
+
+    /* ===== 国保・年金チェッカー ===== */
+    #checker { scroll-margin-top: 70px; }
+    .checker-wrap {
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px;
+    }
+    .checker-tabs { display: flex; gap: 8px; margin-bottom: 20px; }
+    .checker-tab {
+      flex: 1;
+      padding: 10px;
+      border: 2px solid var(--border);
+      background: var(--gray);
+      border-radius: 8px;
+      font-family: inherit;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      color: var(--text2);
+    }
+    .checker-tab.active { border-color: var(--blue); background: var(--blue3); color: var(--blue); }
+    .checker-panel { display: none; }
+    .checker-panel.active { display: block; }
+    .month-grid {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 6px;
+      margin-bottom: 16px;
+    }
+    @media (max-width: 480px) { .month-grid { grid-template-columns: repeat(4, 1fr); } }
+    .month-cell {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      font-size: 0.78rem;
+      color: var(--text2);
+    }
+    .month-cell input[type=checkbox] { width: 18px; height: 18px; accent-color: var(--blue); cursor: pointer; }
+    .month-cell label { cursor: pointer; font-weight: 600; }
+    .checker-result {
+      background: var(--blue3);
+      border-radius: 8px;
+      padding: 12px 16px;
+      font-size: 0.88rem;
+      color: var(--blue);
+      font-weight: 600;
+      text-align: center;
+    }
+    .checker-note {
+      margin-top: 12px;
+      font-size: 0.78rem;
+      color: var(--gray3);
+      background: var(--gray);
+      border-radius: 6px;
+      padding: 10px 14px;
+      line-height: 1.8;
+    }
+
+    /* ===== 医療費判定 ===== */
+    #medical { scroll-margin-top: 70px; }
+    .medical-wrap {
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px;
+    }
+    .medical-search {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+    .medical-input {
+      flex: 1;
+      padding: 10px 14px;
+      border: 1.5px solid var(--border);
+      border-radius: 8px;
+      font-family: inherit;
+      font-size: 0.9rem;
+      color: var(--text);
+    }
+    .medical-input:focus { outline: none; border-color: var(--blue2); }
+    .medical-list { display: flex; flex-direction: column; gap: 8px; }
+    .medical-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 12px 16px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+    }
+    .medical-item.ok { background: var(--green2); border-color: #a8d5bc; }
+    .medical-item.ng { background: var(--red2); border-color: #f5b7b0; }
+    .medical-item.cond { background: var(--yellow2); border-color: #f5d89a; }
+    .medical-verdict {
+      font-size: 1.1rem;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+    .medical-name { font-weight: 700; font-size: 0.9rem; margin-bottom: 3px; }
+    .medical-desc { font-size: 0.78rem; color: var(--text2); }
+    .medical-cond-label {
+      display: inline-block;
+      font-size: 0.68rem;
+      font-weight: 700;
+      padding: 1px 7px;
+      border-radius: 4px;
+      margin-bottom: 3px;
+    }
+    .ok .medical-cond-label { background: var(--green); color: white; }
+    .ng .medical-cond-label { background: var(--red); color: white; }
+    .cond .medical-cond-label { background: var(--yellow); color: white; }
+
+    /* ===== Q&A ===== */
+    #qa { scroll-margin-top: 70px; }
+    .qa-list { display: flex; flex-direction: column; gap: 8px; }
+    .qa-item {
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      overflow: hidden;
+    }
+    .qa-question {
+      width: 100%;
+      text-align: left;
+      background: none;
+      border: none;
+      padding: 14px 18px;
+      font-family: inherit;
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: var(--text);
+      cursor: pointer;
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      transition: background 0.2s;
+    }
+    .qa-question:hover { background: var(--gray); }
+    .qa-q-icon { color: var(--blue); font-weight: 700; flex-shrink: 0; font-size: 1rem; }
+    .qa-arrow { margin-left: auto; font-size: 0.8rem; color: var(--gray3); transition: transform 0.2s; flex-shrink: 0; }
+    .qa-item.open .qa-arrow { transform: rotate(180deg); }
+    .qa-answer {
+      display: none;
+      padding: 0 18px 14px 38px;
+      font-size: 0.85rem;
+      color: var(--text2);
+      line-height: 1.85;
+      border-top: 1px solid var(--gray2);
+    }
+    .qa-item.open .qa-answer { display: block; }
+    .qa-category {
+      font-size: 0.7rem;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 4px;
+      margin-bottom: 12px;
+      display: inline-block;
+    }
+    .cat-blue { background: var(--blue3); color: var(--blue); }
+    .cat-green { background: var(--green2); color: var(--green); }
+    .cat-red { background: var(--red2); color: var(--red); }
+    .qa-answer a { color: var(--blue2); }
+
+    /* ===== Tipsカード ===== */
+    .tips-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+      gap: 12px;
+    }
+    .tip-card {
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 16px;
+    }
+    .tip-icon { font-size: 1.5rem; margin-bottom: 8px; }
+    .tip-title { font-weight: 700; font-size: 0.9rem; margin-bottom: 6px; color: var(--text); }
+    .tip-desc { font-size: 0.8rem; color: var(--text2); line-height: 1.7; }
+    .tip-card.important { border-color: var(--red); border-left: 4px solid var(--red); }
+    .tip-card.important .tip-title { color: var(--red); }
+
+    @media (max-width: 640px) {
+      .hero { padding: 24px 18px; }
+      .tracker-add { grid-template-columns: 1fr 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <div>
+      <div class="header-title">📋 確定申告サポート</div>
+      <div class="header-sub">つまづきポイントを解消して、スムーズに申告を</div>
+    </div>
+    <nav class="nav-tabs">
+      <a class="nav-tab" href="#steps">手順</a>
+      <a class="nav-tab" href="#tracker">書類管理</a>
+      <a class="nav-tab" href="#checker">月数確認</a>
+      <a class="nav-tab" href="#medical">医療費判定</a>
+      <a class="nav-tab" href="#qa">Q&amp;A</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+
+  <!-- ヒーロー -->
+  <div class="hero">
+    <h1>確定申告、もう迷わない。</h1>
+    <p>「どこで詰まるかわからない」を解消するサポートツールです。<br>手順の確認から書類管理、医療費の判定まで、ひとつにまとめました。</p>
+    <p style="margin-top:10px;font-size:0.82rem;background:rgba(255,255,255,0.15);border-radius:8px;padding:8px 14px;display:inline-block;">📱 このガイドは <strong>iPhoneからe-Taxで申告する方</strong> 向けに作成しています</p>
+    <div class="hero-chips">
+      <span class="hero-chip">📄 ステップ手順</span>
+      <span class="hero-chip">🗂 源泉徴収票管理</span>
+      <span class="hero-chip">📅 国保・年金チェッカー</span>
+      <span class="hero-chip">🏥 医療費判定</span>
+      <span class="hero-chip">💬 Q&amp;A</span>
+    </div>
+  </div>
+
+  <!-- ===== ステップ手順 ===== -->
+  <section id="steps">
+    <div class="section-title">
+      📋 確定申告の手順
+      <span class="badge">全9ステップ</span>
+    </div>
+    <div class="steps-list">
+
+      <div class="step-item">
+        <div class="step-left">
+          <div class="step-num">1</div>
+          <div class="step-line"></div>
+        </div>
+        <div class="step-body">
+          <div class="step-title">公金受取口座を登録する（初回のみ）</div>
+          <div class="step-desc">還付金の振込先として「公金受取口座」の登録が必要です。マイナポータルから登録しておかないと、後の手順で詰まります。申告の前に済ませておきましょう。</div>
+          <div class="step-warn">
+            ⚠️ <strong>登録方法</strong><br>
+            マイナポータルアプリ → 「公金受取口座の登録・変更」 → 銀行口座の情報を入力<br>
+            登録には「マイナンバーカード」と「登録したい銀行口座の情報（金融機関名・支店名・口座番号）」が必要です。
+          </div>
+          <div class="step-tip">💡 一度登録すれば翌年以降は不要です。登録済みかどうかはマイナポータルの「公金受取口座」メニューから確認できます。</div>
+        </div>
+      </div>
+
+      <div class="step-item">
+        <div class="step-left">
+          <div class="step-num">2</div>
+          <div class="step-line"></div>
+        </div>
+        <div class="step-body">
+          <div class="step-title">必要書類を集める</div>
+          <div class="step-desc">申告に必要な書類を事前にそろえておきましょう。書類が足りないと途中で止まります。</div>
+          <div class="step-docs">
+            <span class="doc-tag">源泉徴収票</span>
+            <span class="doc-tag">マイナンバーカード</span>
+            <span class="doc-tag">国民健康保険の納付書</span>
+            <span class="doc-tag">国民年金の控除証明書</span>
+            <span class="doc-tag">医療費の領収書</span>
+            <span class="doc-tag">ふるさと納税の証明書</span>
+          </div>
+          <div class="step-tip">💡 源泉徴収票は1月下旬〜2月に職場から発行されます。転職・退職した場合は複数枚になることがあります。</div>
+        </div>
+      </div>
+
+      <div class="step-item">
+        <div class="step-left">
+          <div class="step-num">3</div>
+          <div class="step-line"></div>
+        </div>
+        <div class="step-body">
+          <div class="step-title">iPhoneはSafariをデフォルトブラウザに設定する</div>
+          <div class="step-desc">マイナポータルとe-Taxの連携にはSafariが必要です。ChromeやBraveをお使いの方は必ず変更してください。</div>
+          <div class="step-warn">
+            ⚠️ <strong>設定方法（iPhone）</strong><br>
+            設定アプリ → 「Safari」 → 「デフォルトのブラウザApp」 → 「Safari」を選択<br>
+            申告後は元のブラウザに戻してもOKです。
+          </div>
+        </div>
+      </div>
+
+      <div class="step-item">
+        <div class="step-left">
+          <div class="step-num">4</div>
+          <div class="step-line"></div>
+        </div>
+        <div class="step-body">
+          <div class="step-title">マイナポータルにログインする</div>
+          <div class="step-desc">マイナポータルアプリでマイナンバーカードを読み取り、e-Taxに連携します。</div>
+          <div class="step-tip">💡 マイナポータルアプリは最新版に更新してからお使いください。アプリが古いと読み取りに失敗することがあります。</div>
+        </div>
+      </div>
+
+      <div class="step-item">
+        <div class="step-left">
+          <div class="step-num">5</div>
+          <div class="step-line"></div>
+        </div>
+        <div class="step-body">
+          <div class="step-title">収入を入力する</div>
+          <div class="step-desc">源泉徴収票の「支払金額」と「源泉徴収税額」を入力します。複数枚ある場合はすべて入力してください。</div>
+          <div class="step-warn">⚠️ 年の途中で退職・転職した場合、前職・現職それぞれの源泉徴収票が必要です。どちらかが漏れると税額が変わります。</div>
+        </div>
+      </div>
+
+      <div class="step-item">
+        <div class="step-left">
+          <div class="step-num">6</div>
+          <div class="step-line"></div>
+        </div>
+        <div class="step-body">
+          <div class="step-title">控除を入力する</div>
+          <div class="step-desc">社会保険料控除（国保・年金）、医療費控除、ふるさと納税（寄附金控除）などを入力します。</div>
+
+          <div class="step-tip" style="margin-top:12px;">
+            💡 <strong>【医療費控除】マイナポータル連携で自動取得 → 足りない分を手動で追加する流れ</strong><br><br>
+            <strong>① まずマイナポータルで自動取得する</strong><br>
+            e-Tax（確定申告書等作成コーナー）でマイナポータルと連携すると、加入している健康保険の「医療費通知情報」が自動で読み込まれ、申告書に反映されます。<br>
+            ※ 1年分のデータが取得できるのは毎年<strong>2月9日以降</strong>です。<br><br>
+            <strong>② 自動取得できる範囲を確認する</strong><br>
+            自動取得されるのは<strong>保険診療（保険証を使った受診）分のみ</strong>です。以下は含まれないので手動追加が必要です：<br>
+            ・鍼灸・あんま・マッサージの自費施術<br>
+            ・通院の交通費（電車・バス代）<br>
+            ・保険外診療（セラミック・インプラントなど）<br>
+            ・市販薬（セルフメディケーション税制を使う場合）<br><br>
+            <strong>③ 取得されていない分を手動で追加入力する</strong><br>
+            自動取得された一覧を確認し、入っていない医療費を「医療費の明細を入力する」欄から手動で追加します。領収書を手元に用意して、<strong>病院名・支払金額</strong>をまとめて入力すればOKです（支払日の入力は不要です）。<br><br>
+            ※ 家族の医療費を合算する場合は、マイナポータルで事前に「代理人設定」が必要です。
+          </div>
+
+          <div class="step-warn" style="margin-top:12px;">
+            ⚠️ <strong>ふるさと納税に注意！</strong><br>
+            確定申告をする場合、ワンストップ特例は自動的に無効になります。
+            寄附したすべての自治体・金額を「寄附金控除」に自分で入力してください。
+          </div>
+          <div class="step-tip">💡 国保・年金の支払い月数は下の「月数確認チェッカー」で整理できます。</div>
+        </div>
+      </div>
+
+      <div class="step-item">
+        <div class="step-left">
+          <div class="step-num">7</div>
+          <div class="step-line"></div>
+        </div>
+        <div class="step-body">
+          <div class="step-title">内容を確認して提出する</div>
+          <div class="step-desc">入力内容に間違いがないか確認してから、e-Taxで電子送信します。</div>
+          <div class="step-tip">💡 申告期限は毎年3月15日前後です。還付申告（税金が戻る場合）は1月から提出できます。</div>
+        </div>
+      </div>
+
+      <div class="step-item">
+        <div class="step-left">
+          <div class="step-num">8</div>
+          <div class="step-line"></div>
+        </div>
+        <div class="step-body">
+          <div class="step-title">受付番号で送信完了を確認する</div>
+          <div class="step-desc">送信が完了すると <strong>「申告内容確認票」</strong> が表示されます。<strong>最初のページの右上に記載されている「受付番号」</strong>が、税務署に正式に届いた証明です。この番号がなければ送信が完了していない可能性があります。</div>
+          <div class="step-warn">
+            ⚠️ <strong>申告内容確認票はスクリーンショットで保存してください</strong><br>
+            最初のページ右上の受付番号が確認できるようにスクショを撮っておきましょう。<br>
+            受付番号がない・確認票が表示されない場合は送信できていない可能性があります。
+          </div>
+          <div class="step-tip">
+            💡 <strong>後から確認する場合</strong><br>
+            e-Taxの「お知らせ・受信通知」メニューからも受付番号を含む受信通知を確認できます。<br>
+            iPhoneの場合はSafariでe-Tax（<a href="https://www.e-tax.nta.go.jp/" target="_blank" rel="noopener" style="color:var(--blue2)">www.e-tax.nta.go.jp</a>）にログインし、「お知らせ・受信通知」を開いてください。
+          </div>
+        </div>
+      </div>
+
+      <div class="step-item">
+        <div class="step-left">
+          <div class="step-num">9</div>
+          <div class="step-line"></div>
+        </div>
+        <div class="step-body">
+          <div class="step-title">還付金の振込・納税を確認する</div>
+          <div class="step-desc">還付がある場合は数週間以内に指定口座に振込されます。追加納税がある場合は期限内に支払いましょう。</div>
+          <div class="step-tip">💡 来年のために、今年の書類の保管場所をこのページの「源泉徴収票トラッカー」にメモしておくと便利です。</div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ===== 源泉徴収票トラッカー ===== -->
+  <section id="tracker">
+    <div class="section-title">🗂 源泉徴収票トラッカー</div>
+    <div class="tracker-wrap">
+      <p style="font-size:0.83rem;color:var(--text2);margin-bottom:14px;">「あの書類どこに入れたっけ」を防ぐためのメモ帳です。保管場所を年ごとに記録しておきましょう。</p>
+      <div class="tracker-add">
+        <select class="t-select" id="t-year">
+          <option value="">年を選択</option>
+          <option value="2024年（令和6年）">2024年（令和6年）</option>
+          <option value="2023年（令和5年）">2023年（令和5年）</option>
+          <option value="2022年（令和4年）">2022年（令和4年）</option>
+          <option value="2021年（令和3年）">2021年（令和3年）</option>
+          <option value="2020年（令和2年）">2020年（令和2年）</option>
+        </select>
+        <select class="t-select" id="t-count">
+          <option value="">枚数</option>
+          <option value="1枚">1枚</option>
+          <option value="2枚">2枚</option>
+          <option value="3枚">3枚</option>
+          <option value="4枚以上">4枚以上</option>
+        </select>
+        <input type="text" class="t-input" id="t-loc" placeholder="保管場所（例：引き出し左上、スキャンしてGoogleドライブ）">
+        <button class="t-btn" onclick="addTracker()">追加</button>
+      </div>
+      <div class="tracker-list" id="tracker-list">
+        <div class="tracker-empty" id="tracker-empty">まだ記録がありません</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== 国保・年金チェッカー ===== -->
+  <section id="checker">
+    <div class="section-title">📅 国保・年金 支払い月数チェッカー</div>
+    <div class="checker-wrap">
+      <p style="font-size:0.83rem;color:var(--text2);margin-bottom:14px;">「何月分を払ったか」を確認するためのチェッカーです。チェックを入れた月数が申告に使う支払い月数になります。</p>
+      <div class="checker-tabs">
+        <button class="checker-tab active" onclick="switchChecker('kokuho', this)">🏥 国民健康保険</button>
+        <button class="checker-tab" onclick="switchChecker('nenkin', this)">🏛 国民年金</button>
+      </div>
+
+      <div class="checker-panel active" id="checker-kokuho">
+        <div class="month-grid" id="grid-kokuho"></div>
+        <div class="checker-result" id="result-kokuho">チェックした月：0ヶ月</div>
+        <div class="checker-note">
+          ⚠️ 国民健康保険は「1月〜12月に実際に支払った金額」が控除対象です。月数ではなく支払金額を納付書で確認してください。<br>
+          ✅ 会社の健康保険（社保）から切り替えた月は、切り替えた月から国保の対象になります。
+        </div>
+      </div>
+
+      <div class="checker-panel" id="checker-nenkin">
+        <div class="month-grid" id="grid-nenkin"></div>
+        <div class="checker-result" id="result-nenkin">チェックした月：0ヶ月</div>
+        <div class="checker-note">
+          ⚠️ 国民年金は「ねんきん定期便」または「社会保険料（国民年金保険料）控除証明書」に記載されている金額が控除対象です。<br>
+          ✅ 控除証明書は10〜11月頃に郵送されます。紛失した場合は日本年金機構に再発行を依頼できます。
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== 医療費判定 ===== -->
+  <section id="medical">
+    <div class="section-title">🏥 「これ医療費？」判定ツール</div>
+    <div class="medical-wrap">
+      <p style="font-size:0.83rem;color:var(--text2);margin-bottom:14px;">迷いやすい項目が医療費控除の対象かどうかを一覧で確認できます。キーワードで絞り込めます。</p>
+      <div class="medical-search">
+        <input type="text" class="medical-input" id="medical-search" placeholder="例：鍼灸、電車代、サプリ..." oninput="filterMedical(this.value)">
+      </div>
+      <div class="medical-list" id="medical-list"></div>
+    </div>
+  </section>
+
+  <!-- ===== Q&A ===== -->
+  <section id="qa">
+    <div class="section-title">💬 よくある Q &amp; A</div>
+    <div class="qa-list" id="qa-list"></div>
+  </section>
+
+  <!-- ===== みんなのつまづき ===== -->
+  <section id="tips">
+    <div class="section-title">📣 みんなのつまづきポイント</div>
+    <div class="tips-grid">
+      <div class="tip-card important">
+        <div class="tip-icon">⚠️</div>
+        <div class="tip-title">ふるさと納税が消える！</div>
+        <div class="tip-desc">確定申告をすると「ワンストップ特例」は自動的に無効に。全ての寄附金額を自分で「寄附金控除」欄に記入しないと、控除がまるごと消えます。毎年これで泣く人続出。</div>
+      </div>
+      <div class="tip-card important">
+        <div class="tip-icon">📱</div>
+        <div class="tip-title">マイナポータルにつながらない</div>
+        <div class="tip-desc">iPhoneのデフォルトブラウザがChromeやBraveだとe-Taxと連携できない。設定→Safari→デフォルトブラウザ→Safariに変更するだけで解決。</div>
+      </div>
+      <div class="tip-card">
+        <div class="tip-icon">📄</div>
+        <div class="tip-title">源泉徴収票が1枚足りない</div>
+        <div class="tip-desc">年の途中で転職・退職した人は前職分の源泉徴収票も必要。もらい忘れた場合は前の職場に再発行を依頼できます（義務あり）。</div>
+      </div>
+      <div class="tip-card">
+        <div class="tip-icon">💊</div>
+        <div class="tip-title">医療費控除の対象がわからない</div>
+        <div class="tip-desc">「鍼灸の自費分はOK」「通院の電車代もOK」「サプリはNG」「美容目的はNG」。迷ったら上の判定ツールで確認を。</div>
+      </div>
+      <div class="tip-card">
+        <div class="tip-icon">📅</div>
+        <div class="tip-title">国保・年金の払った月数が不明</div>
+        <div class="tip-desc">「12月分は払った？」「9月から入ったっけ？」は納付書や通帳で確認。控除できるのは「その年に実際に払った金額」です。</div>
+      </div>
+      <div class="tip-card">
+        <div class="tip-icon">🏦</div>
+        <div class="tip-title">基礎控除の記入漏れ</div>
+        <div class="tip-desc">48万円の基礎控除の記入を忘れるケースが多発。自動入力されない箇所もあるので、送信前に必ず確認を。</div>
+      </div>
+      <div class="tip-card">
+        <div class="tip-icon">🔁</div>
+        <div class="tip-title">定額減税の記載欄を忘れがち</div>
+        <div class="tip-desc">2024年分から「定額減税」の記載欄が追加。記入が漏れると減税が反映されません。給与所得者でe-Taxを使う場合は特に注意。</div>
+      </div>
+      <div class="tip-card">
+        <div class="tip-icon">🖨️</div>
+        <div class="tip-title">書類を印刷して提出しようとした</div>
+        <div class="tip-desc">e-Taxを使えば印刷・郵送・税務署への持参が不要。マイナンバーカードがあれば自宅から全て完結します。</div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<script>
+/* ===== 源泉徴収票トラッカー ===== */
+function getTrackers() { return JSON.parse(localStorage.getItem('tax-trackers') || '[]'); }
+function saveTrackers(data) { localStorage.setItem('tax-trackers', JSON.stringify(data)); }
+
+function renderTrackers() {
+  const list = getTrackers();
+  const el = document.getElementById('tracker-list');
+  const empty = document.getElementById('tracker-empty');
+  if (list.length === 0) {
+    el.innerHTML = '';
+    el.appendChild(empty);
+    empty.style.display = 'block';
+    return;
+  }
+  empty.style.display = 'none';
+  el.innerHTML = list.map((item, i) => `
+    <div class="tracker-item">
+      <div class="tracker-item-year">${item.year.replace('（', '<br><span style="font-size:0.7rem;font-weight:400">').replace('）', '</span>')}</div>
+      <div class="tracker-item-count">${item.count}</div>
+      <div class="tracker-item-loc">📁 ${item.loc}</div>
+      <button class="tracker-del" onclick="deleteTracker(${i})">✕</button>
+    </div>
+  `).join('');
+}
+
+function addTracker() {
+  const year = document.getElementById('t-year').value;
+  const count = document.getElementById('t-count').value;
+  const loc = document.getElementById('t-loc').value.trim();
+  if (!year || !count || !loc) { alert('年・枚数・保管場所をすべて入力してください'); return; }
+  const data = getTrackers();
+  data.unshift({ year, count, loc });
+  saveTrackers(data);
+  document.getElementById('t-loc').value = '';
+  renderTrackers();
+}
+
+function deleteTracker(i) {
+  const data = getTrackers();
+  data.splice(i, 1);
+  saveTrackers(data);
+  renderTrackers();
+}
+
+/* ===== 国保・年金チェッカー ===== */
+const months = ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月'];
+
+function buildMonthGrid(type) {
+  const grid = document.getElementById('grid-' + type);
+  grid.innerHTML = months.map((m, i) => `
+    <div class="month-cell">
+      <input type="checkbox" id="${type}-${i}" onchange="updateCheckerResult('${type}')">
+      <label for="${type}-${i}">${m}</label>
+    </div>
+  `).join('');
+}
+
+function updateCheckerResult(type) {
+  const checked = months.filter((_, i) => document.getElementById(`${type}-${i}`).checked).length;
+  document.getElementById('result-' + type).textContent = `チェックした月：${checked}ヶ月`;
+}
+
+function switchChecker(type, btn) {
+  document.querySelectorAll('.checker-tab').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.checker-panel').forEach(p => p.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('checker-' + type).classList.add('active');
+}
+
+/* ===== 医療費判定 ===== */
+const medicalItems = [
+  { name: '病院・クリニックへの診察代', verdict: 'ok', label: '対象○', desc: '治療目的の診察、検査費用は全て対象です。' },
+  { name: '処方薬・薬局での薬代', verdict: 'ok', label: '対象○', desc: '医師の処方による薬代は対象です。市販薬も一部対象（セルフメディケーション税制あり）。' },
+  { name: '通院のための交通費（電車・バス）', verdict: 'ok', label: '対象○', desc: '病院への通院に使った公共交通機関の費用は対象。領収書がなくてもメモでOK。' },
+  { name: '鍼灸・あんまの自費診療', verdict: 'ok', label: '対象○', desc: '治療目的であれば対象。美容目的は不可。施術院の領収書を保管してください。' },
+  { name: '入院時の食事代（保険適用分）', verdict: 'ok', label: '対象○', desc: '入院中の食事療養費の自己負担分は対象です。' },
+  { name: '妊娠・出産費用', verdict: 'ok', label: '対象○', desc: '検診費用、入院・出産費用は対象。ただし出産育児一時金を差し引いた金額が対象になります。' },
+  { name: 'インプラント治療費（保険外）', verdict: 'ok', label: '対象○', desc: '欠損した歯を補うためのインプラントは治療目的のため対象です。保険適用外（自由診療）でも対象になります。領収書に「治療費」「インプラント治療」などと記載されていれば申告に使えます。（出典：国税庁 No.1128）' },
+  { name: '歯科の保険外診療（セラミック・金歯・ジルコニア等）', verdict: 'ok', label: '対象○', desc: '国税庁は「金やポーセレン（セラミック）は歯の治療材料として一般的に使用されている」と明示しており、保険外診療でも対象です。領収書の区分欄に「治療費」「処置費」「補綴料」などと記載されていれば、自由診療でも申告できます。（出典：国税庁 No.1128）' },
+  { name: '歯列矯正（子どもの成長阻害を防ぐ目的）', verdict: 'ok', label: '対象○', desc: '発育段階の子どもに対して、不正咬合を改善し成長を阻害しないために行う矯正は医療費控除の対象です。歯科医師が医学的に必要と判断した場合も対象になります。（出典：国税庁 No.1128）' },
+  { name: '通院のためのタクシー代', verdict: 'cond', label: '条件付き△', desc: '電車・バスの利用が困難な場合のみ対象。通常は公共交通機関の利用が前提です。' },
+  { name: '市販の風邪薬・胃腸薬', verdict: 'cond', label: '条件付き△', desc: 'セルフメディケーション税制を使う場合は対象（医療費控除とは別制度・選択式）。通常の医療費控除には含められません。' },
+  { name: '眼鏡・コンタクトレンズ代', verdict: 'cond', label: '条件付き△', desc: '治療目的（弱視など）で医師の指示がある場合は対象。通常の視力矯正目的は不可。' },
+  { name: '歯列矯正（大人の容貌改善・審美目的）', verdict: 'ng', label: '対象外×', desc: '容貌の改善・美容目的の矯正は対象外です。ただし歯科医師が「機能的に問題あり」と判断し治療として行う場合は対象になる可能性があります。歯科医師に確認してください。（出典：国税庁 No.1128）' },
+  { name: 'ホワイトニング', verdict: 'ng', label: '対象外×', desc: '歯の美白・審美目的のホワイトニングは対象外です。国税庁は「容ぼうを美化するための費用」は対象外と明示しています。領収書に「治療費」と書かれていても、美容目的であれば控除できません。（出典：国税庁 No.1128）' },
+  { name: '通院の自家用車のガソリン代', verdict: 'ng', label: '対象外×', desc: '自家用車での通院は、ガソリン代・駐車場代とも対象外です。公共交通機関の費用のみが対象。' },
+  { name: 'サプリメント・栄養ドリンク', verdict: 'ng', label: '対象外×', desc: '健康維持・増進目的のサプリは対象外です。医師の処方がある場合を除きます。' },
+  { name: '美容整形', verdict: 'ng', label: '対象外×', desc: '美容目的の施術は全て対象外です。治療目的かどうかが判断基準。' },
+  { name: 'スポーツジム・水泳教室の費用', verdict: 'ng', label: '対象外×', desc: '健康増進目的は対象外。医師の処方で行うリハビリ目的の場合を除きます。' },
+  { name: '人間ドック・健康診断費用', verdict: 'ng', label: '対象外×', desc: '原則として対象外ですが、検査で異常が見つかり治療につながった場合は全額対象になります。' },
+  { name: 'マッサージ（リラクゼーション目的）', verdict: 'ng', label: '対象外×', desc: '疲労回復・リラクゼーション目的は対象外。国家資格保持者による治療目的のみ対象。' },
+];
+
+function renderMedical(items) {
+  document.getElementById('medical-list').innerHTML = items.map(item => `
+    <div class="medical-item ${item.verdict}">
+      <div class="medical-verdict">${item.verdict === 'ok' ? '✅' : item.verdict === 'ng' ? '❌' : '⚠️'}</div>
+      <div>
+        <div class="medical-cond-label">${item.label}</div>
+        <div class="medical-name">${item.name}</div>
+        <div class="medical-desc">${item.desc}</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function filterMedical(q) {
+  const filtered = q.trim()
+    ? medicalItems.filter(i => i.name.includes(q) || i.desc.includes(q))
+    : medicalItems;
+  renderMedical(filtered);
+}
+
+/* ===== Q&A ===== */
+const qaData = [
+  {
+    cat: 'cat-red', catLabel: 'ふるさと納税',
+    q: '確定申告するとふるさと納税のワンストップ特例が無効になる？',
+    a: 'はい、無効になります。確定申告をした時点でワンストップ特例は自動的に取り消されます。確定申告で医療費控除などを申告する場合は、ふるさと納税のすべての寄附金額を「寄附金控除」欄に自分で入力してください。申請書を送付していても、記入しなければ控除されません。'
+  },
+  {
+    cat: 'cat-blue', catLabel: 'e-Tax / 操作',
+    q: 'iPhoneでマイナポータルにつながらない、別のブラウザが開く',
+    a: 'iPhoneのデフォルトブラウザがSafari以外（ChromeやBraveなど）になっていることが原因です。「設定」→「Safari」→「デフォルトのブラウザApp」→「Safari」を選択してください。申告が終わったら元のブラウザに戻しても大丈夫です。また、マイナポータルアプリを最新版に更新することも確認してください。'
+  },
+  {
+    cat: 'cat-blue', catLabel: '源泉徴収票',
+    q: '途中で退職・転職した場合、源泉徴収票は何枚必要？',
+    a: '職場の数だけ必要です。例えば1月〜6月に前職、8月〜12月に現職なら2枚必要になります。前職の源泉徴収票を受け取っていない場合は、前の職場に再発行を依頼してください（事業者には発行義務があります）。'
+  },
+  {
+    cat: 'cat-green', catLabel: '医療費控除',
+    q: '通院の電車代は医療費控除に含められる？',
+    a: 'はい、含められます。病院への通院に使った電車・バスなどの公共交通機関の費用は医療費控除の対象です。領収書がなくてもメモや交通系ICカードの履歴で記録しておけばOKです。ただし自家用車のガソリン代・駐車場代は対象外です。'
+  },
+  {
+    cat: 'cat-green', catLabel: '医療費控除',
+    q: '歯科の保険外診療（セラミック・金歯・インプラント）は医療費控除の対象？領収書はどう見ればいい？',
+    a: '治療目的の保険外診療は対象です。国税庁は「金やポーセレン（セラミック）は歯の治療材料として一般的に使用されている」と明示しており、保険が効かない自由診療であっても医療費控除の対象になります。\n\n【領収書の確認ポイント】領収書の「区分」や「内容」欄に「治療費」「処置費」「補綴料」「インプラント治療」などと記載されていれば、申告の際の証明として使えます。ただし「ホワイトニング」「審美」などと書かれている場合は美容目的とみなされ対象外です。治療目的かどうかが判断基準なので、迷う場合は歯科医院に「治療目的である旨を領収書に記載してもらう」よう依頼することもできます。\n\n領収書の提出自体は不要ですが、5年間自宅で保管しておく義務があります。（出典：国税庁 No.1128）'
+  },
+  {
+    cat: 'cat-green', catLabel: '医療費控除',
+    q: '鍼灸・あんまの費用は医療費控除の対象？',
+    a: '治療目的であれば対象になります。ただし「あん摩マッサージ指圧師」「はり師」「きゅう師」などの国家資格を持つ施術者による治療であることが条件です。美容目的やリラクゼーション目的は対象外になります。施術院の領収書を必ず保管してください。'
+  },
+  {
+    cat: 'cat-blue', catLabel: '社会保険料',
+    q: '国民健康保険・国民年金の控除はどこに入力する？',
+    a: '「社会保険料控除」の欄に入力します。国保は「1月〜12月に実際に支払った金額」を納付書や通帳で確認してください。国民年金は10〜11月頃に届く「社会保険料（国民年金保険料）控除証明書」に記載された金額を入力します。月数ではなく支払金額を入力することに注意してください。'
+  },
+  {
+    cat: 'cat-blue', catLabel: '社会保険料',
+    q: '1年の途中から国民年金・国保に加入した場合は？',
+    a: '加入した月以降に支払った金額だけが対象です。例えば7月に会社を退職して国保・国民年金に加入した場合、7月〜12月分の支払いが対象になります。ただし「その年に支払った金額」が基準なので、翌年分を前払いした分も含まれることがあります。'
+  },
+  {
+    cat: 'cat-blue', catLabel: '申告全般',
+    q: '還付申告はいつからできる？',
+    a: '還付申告（税金が戻ってくる申告）は翌年の1月1日から5年間いつでも提出できます。通常の申告期間（2月中旬〜3月中旬）前でも提出できるので、早めに準備が整った場合は1月から提出するのがおすすめです。税務署が混雑しておらず、還付金も早く振り込まれます。'
+  },
+  {
+    cat: 'cat-blue', catLabel: '申告全般',
+    q: '確定申告を期限後に出すとどうなる？',
+    a: '期限後の申告（期限後申告）は受け付けてもらえますが、「無申告加算税」が課される場合があります。ただし還付申告（税金が戻る場合）については加算税はなく、申告から5年以内であれば問題なく還付を受けられます。気づいたらなるべく早く提出することをおすすめします。'
+  },
+  {
+    cat: 'cat-green', catLabel: '医療費控除',
+    q: '医療費控除は10万円以上でないと申告できない？',
+    a: '原則として医療費の合計が「10万円」または「総所得金額の5%」のどちらか低い金額を超えた分が控除されます。所得が低い場合は10万円未満でも控除になることがあります。また、別制度の「セルフメディケーション税制」を使うと、市販薬の購入費が1万2000円を超えた分（最大8万8000円）を控除できます（通常の医療費控除との選択式）。'
+  },
+];
+
+function renderQA() {
+  document.getElementById('qa-list').innerHTML = qaData.map((item, i) => `
+    <div class="qa-item" id="qa-${i}">
+      <button class="qa-question" onclick="toggleQA(${i})">
+        <span class="qa-q-icon">Q</span>
+        <span>${item.q}</span>
+        <span class="qa-arrow">▼</span>
+      </button>
+      <div class="qa-answer">
+        <span class="qa-category ${item.cat}">${item.catLabel}</span><br>
+        ${item.a}
+      </div>
+    </div>
+  `).join('');
+}
+
+function toggleQA(i) {
+  document.getElementById('qa-' + i).classList.toggle('open');
+}
+
+/* ===== 初期化 ===== */
+function init() {
+  renderTrackers();
+  buildMonthGrid('kokuho');
+  buildMonthGrid('nenkin');
+  renderMedical(medicalItems);
+  renderQA();
+}
+
+init();
+</script>
+</body>
+</html>
